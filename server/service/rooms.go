@@ -2,6 +2,8 @@ package service
 
 import "realtime-chat/broadcast"
 
+var managerSingleton *manager
+
 type Manager interface {
 	OpenListener(roomid string) chan interface{}
 	CloseListener(roomid string, channel chan interface{})
@@ -28,17 +30,20 @@ type manager struct {
 	messages     chan *Message
 }
 
-func NewRoomManager() Manager {
-	manager := &manager{
-		roomChannels: make(map[string]broadcast.Broadcaster),
-		open:         make(chan *Listener, 100),
-		close:        make(chan *Listener, 100),
-		delete:       make(chan string, 100),
-		messages:     make(chan *Message, 100),
+func GetRoomManager() Manager {
+	if managerSingleton == nil {
+		managerSingleton = &manager{
+			roomChannels: make(map[string]broadcast.Broadcaster),
+			open:         make(chan *Listener, 100),
+			close:        make(chan *Listener, 100),
+			delete:       make(chan string, 100),
+			messages:     make(chan *Message, 100),
+		}
+
+		go managerSingleton.run()
 	}
 
-	go manager.run()
-	return manager
+	return managerSingleton
 }
 
 func (m *manager) run() {

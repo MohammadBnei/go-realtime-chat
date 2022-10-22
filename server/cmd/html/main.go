@@ -12,7 +12,7 @@ import (
 var roomManager service.Manager
 
 func main() {
-	roomManager = service.NewRoomManager()
+	roomManager = service.GetRoomManager()
 	adapter := adapter.NewGinHTMLAdapter(roomManager)
 	router := gin.Default()
 	router.SetHTMLTemplate(adapter.Template)

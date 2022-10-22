@@ -1,7 +1,7 @@
 package config
 
 type ServerConfig struct {
-	Port string
+	Port string `mapstructure:"PORT"`
 }
 
 // type PostgresConn struct {

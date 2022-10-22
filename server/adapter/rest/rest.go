@@ -38,11 +38,11 @@ func NewGinAdapter(rm service.Manager) *ginAdapter {
 // @Summary      Stream messages
 // @Description  Stream messages from a room
 // @Tags         chat
-// @Produce      octet-stream
-// @Param        id   path      string  "roomie"  "Room ID"
-// @Failure      400  {object}  httputil.HTTPError
-// @Failure      500  {object}  httputil.HTTPError
-// @Router       /rooms/{id} [get]
+// @Produce      text/event-stream
+// @Param        id   path      string  true  "Room ID"
+// @Failure      400  {object}  HTTPError
+// @Failure      500  {object}  HTTPError
+// @Router       /stream/{id} [get]
 func (ga *ginAdapter) Stream(c *gin.Context) {
 	roomid := c.Param("roomid")
 	listener := ga.roomManager.OpenListener(roomid)
@@ -50,6 +50,8 @@ func (ga *ginAdapter) Stream(c *gin.Context) {
 
 	clientGone := c.Request.Context().Done()
 	c.Stream(func(w io.Writer) bool {
+		c.SSEvent("connection", "data: success")
+
 		select {
 		case <-clientGone:
 			return false
@@ -66,11 +68,12 @@ func (ga *ginAdapter) Stream(c *gin.Context) {
 // @Tags         chat
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string  "roomie"  "Room ID"
-// @Success      200  {object}  Response
-// @Failure      400  {object}  httputil.HTTPError
-// @Failure      500  {object}  httputil.HTTPError
-// @Router       /rooms/{id} [post]
+// @Param        id   path      string  true  "Room ID"
+// @Param        messageInput   body      messageInput  true  "Message body"
+// @Success      200  {object}  response
+// @Failure      400  {object}  HTTPError
+// @Failure      500  {object}  HTTPError
+// @Router       /room/{id} [post]
 func (ga *ginAdapter) PostRoom(c *gin.Context) {
 	roomid := c.Param("roomid")
 	var input messageInput
@@ -91,10 +94,10 @@ func (ga *ginAdapter) PostRoom(c *gin.Context) {
 // @Description  Delete the room
 // @Tags         chat
 // @Produce      json
-// @Param        id   path      string  "roomie"  "Room ID"
-// @Success      200  {object}  Response
-// @Failure      500  {object}  httputil.HTTPError
-// @Router       /rooms/{id} [delete]
+// @Param        id   path      string  true  "Room ID"
+// @Success      200  {object}  response
+// @Failure      500  {object}  HTTPError
+// @Router       /room/{id} [delete]
 func (ga *ginAdapter) DeleteRoom(c *gin.Context) {
 	roomid := c.Param("roomid")
 	ga.roomManager.DeleteBroadcast(roomid)

@@ -12,8 +12,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-var roomManager service.Manager
-
 // @title           Realtime Chat API
 // @version         0.1
 // @description     Realtime chat api using channels.
@@ -25,11 +23,10 @@ var roomManager service.Manager
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      localhost:4000
 // @BasePath  /api
 
 func main() {
-	roomManager = service.NewRoomManager()
+	roomManager := service.GetRoomManager()
 	adapter := adapter.NewGinAdapter(roomManager)
 	router := gin.Default()
 	docs.SwaggerInfo.BasePath = "/api"

@@ -22,21 +22,16 @@ func ParseConfig() config {
 
 	log.Println("parsing config file")
 
-	viper.SetConfigName("config") // name of config file (without extension)
-	// viper.SetConfigType("yaml")         // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(ConfigFilePath) // optionally look for config in the working directory
-	err := viper.ReadInConfig()         // Find and read the config file
+	viper.AutomaticEnv()
 
-	if err != nil {
-		log.Fatal("error parsing config file : ", err)
-	}
-
-	err = viper.Unmarshal(&readConfig)
+	err := viper.Unmarshal(&readConfig)
 	if err != nil {
 		log.Fatal("error unmarshing config file in struct : ", err)
 	}
 
-	log.Println("config file parsed successfully")
+	readConfig.ServerConfig.Port = viper.Get("port").(string)
+
+	log.Println("Env variable parsed successfully")
 
 	return readConfig
 }

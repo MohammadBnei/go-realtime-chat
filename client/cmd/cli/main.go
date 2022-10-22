@@ -5,12 +5,11 @@ import (
 	"log"
 	"os"
 
-	"rc-client/client/chat"
+	"rc-client/domain"
+	"rc-client/messagePB"
 	"rc-client/service"
 
-	sse "astuart.co/go-sse"
-	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
+	"google.golang.org/grpc"
 )
 
 var username, roomId string
@@ -18,9 +17,9 @@ var username, roomId string
 func main() {
 	host := os.Getenv("CHAT_HOST")
 	if host == "" {
-		host = "localhost:4001"
+		host = "localhost:4002"
 	}
-	message := make(chan *sse.Event, 100)
+	message := make(chan *domain.Message, 100)
 
 	for username == "" {
 		fmt.Print("Enter your username : ")
@@ -38,8 +37,15 @@ func main() {
 		}
 	}
 
-	api := chat.New(httptransport.New(host, "/api", nil), strfmt.Default)
-	restService := service.NewRestService(&service.RestServiceConfig{
+	var conn *grpc.ClientConn
+	conn, err := grpc.Dial(host, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %s", err)
+	}
+	defer conn.Close()
+
+	api := messagePB.NewRoomClient(conn)
+	restService := service.NewGrpcService(&service.GrpcServiceConfig{
 		Username: username,
 		RoomId:   roomId,
 		Host:     "http://" + host,
@@ -58,18 +64,13 @@ func main() {
 				fmt.Println("Channel closed")
 				break
 			}
-			str := make([]byte, 1024)
-			n, err := msg.Data.Read(str)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if n == 0 {
+			if msg.UserId == username {
 				continue
 			}
-			if string(str) != "\n" {
+			if string(msg.Text) != "\n" {
 				// Green console colour: 	\x1b[32m
 				// Reset console colour: 	\x1b[0m
-				fmt.Printf("\x1b[32m%s\n\x1b[0m> ", str)
+				fmt.Printf("\x1b[32m%s\x1b[0m → %s\n> ", msg.UserId, msg.Text)
 			}
 		}
 	}()

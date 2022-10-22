@@ -5,7 +5,7 @@ services:
     build: .
     volumes:
       - ./message.proto:/gen/proto/message.proto
-      - ./server:/out/go/server
-      - ./client:/out/go/client
+      - ./server:/out/go
+      - ./client:/out/go
     working_dir: /
 

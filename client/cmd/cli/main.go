@@ -1,18 +1,19 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 
 	"rc-client/client/chat"
-	"rc-client/models"
+	"rc-client/service"
 
 	sse "astuart.co/go-sse"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 )
+
+var username, roomId string
 
 func main() {
 	host := os.Getenv("CHAT_HOST")
@@ -21,11 +22,34 @@ func main() {
 	}
 	message := make(chan *sse.Event, 100)
 
-	go getStream("http://"+host, "test", message)
-	log.Println("Listening for stream")
+	for username == "" {
+		fmt.Print("Enter your username : ")
+		_, err := fmt.Scan(&username)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	for roomId == "" {
+
+		fmt.Print("Enter the room name : ")
+		_, err := fmt.Scan(&roomId)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 
 	api := chat.New(httptransport.New(host, "/api", nil), strfmt.Default)
-	go writeData(api, "client-test", "test")
+	restService := service.NewRestService(&service.RestServiceConfig{
+		Username: username,
+		RoomId:   roomId,
+		Host:     "http://" + host,
+		Api:      api,
+	})
+
+	go restService.GetStream("http://"+host, message)
+	log.Println("Listening for stream")
+
+	go restService.WriteData()
 
 	go func() {
 		for {
@@ -51,41 +75,4 @@ func main() {
 	}()
 
 	select {}
-}
-
-func getStream(host, roomId string, msg chan *sse.Event) error {
-	err := sse.Notify(fmt.Sprintf("%v/api/stream/%v", host, roomId), msg)
-	if err != nil {
-		fmt.Print(err)
-		return err
-	}
-
-	return nil
-}
-
-func writeData(api chat.ClientService, username, roomId string) {
-	stdReader := bufio.NewReader(os.Stdin)
-
-	for {
-		fmt.Print("> ")
-		sendData, err := stdReader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Error", err)
-			break
-		}
-		if sendData == "" {
-			break
-		}
-		postParams := chat.NewPostRoomIDParams()
-		postParams.ID = roomId
-		postParams.MessageInput = &models.AdapterMessageInput{
-			Data:   sendData,
-			UserID: username,
-		}
-		_, err = api.PostRoomID(postParams)
-
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
 }

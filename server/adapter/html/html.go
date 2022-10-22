@@ -39,7 +39,12 @@ func (ga *ginHTMLAdapter) Stream(c *gin.Context) {
 		case <-clientGone:
 			return false
 		case message := <-listener:
-			c.SSEvent("message", message)
+			serviceMsg, ok := message.(service.Message)
+			if !ok {
+				c.SSEvent("message", message)
+				return false
+			}
+			c.SSEvent("message", " "+serviceMsg.UserId+" → "+serviceMsg.Text)
 			return true
 		}
 	})

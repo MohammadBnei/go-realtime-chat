@@ -56,7 +56,7 @@ func (m *manager) run() {
 		case roomid := <-m.delete:
 			m.deleteBroadcast(roomid)
 		case message := <-m.messages:
-			m.room(message.RoomId).Submit(message.UserId + ": " + message.Text)
+			m.room(message.RoomId).Submit(" " + message.UserId + " → " + message.Text)
 		}
 	}
 }

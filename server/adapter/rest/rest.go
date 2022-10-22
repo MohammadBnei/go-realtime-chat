@@ -50,8 +50,6 @@ func (ga *ginAdapter) Stream(c *gin.Context) {
 
 	clientGone := c.Request.Context().Done()
 	c.Stream(func(w io.Writer) bool {
-		c.SSEvent("connection", "data: success")
-
 		select {
 		case <-clientGone:
 			return false

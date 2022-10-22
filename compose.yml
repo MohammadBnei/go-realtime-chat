@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  grpc-gen:
+    build: .
+    volumes:
+      - ./message.proto:/gen/proto/message.proto
+      - ./server:/out/go/server
+      - ./client:/out/go/client
+    working_dir: /
+

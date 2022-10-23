@@ -4,14 +4,14 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"os"
+	"io"
 	"rc-client/domain"
 	"rc-client/messagePB"
 )
 
 type Service interface {
 	GetStream(host string, msg chan *domain.Message) error
-	WriteData()
+	WriteData(rw io.Reader)
 }
 
 type grpcService struct {
@@ -54,8 +54,8 @@ func (rs *grpcService) GetStream(host string, msg chan *domain.Message) error {
 	}
 }
 
-func (rs *grpcService) WriteData() {
-	stdReader := bufio.NewReader(os.Stdin)
+func (rs *grpcService) WriteData(rw io.Reader) {
+	stdReader := bufio.NewReader(rw)
 
 	for {
 		fmt.Print("> ")
@@ -64,8 +64,8 @@ func (rs *grpcService) WriteData() {
 			fmt.Println("Error", err)
 			break
 		}
-		if sendData == "" {
-			break
+		if sendData == "" || sendData == "\n" {
+			continue
 		}
 		sendData = sendData[:len(sendData)-1]
 		res, err := rs.api.PostToRoom(context.Background(), &messagePB.Message{
@@ -75,6 +75,7 @@ func (rs *grpcService) WriteData() {
 		})
 		if err != nil {
 			fmt.Println(err)
+			continue
 		}
 
 		if !res.Success {

@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 
 	"rc-client/domain"
 	"rc-client/messagePB"
 	"rc-client/service"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var username, roomId string
@@ -38,7 +40,7 @@ func main() {
 	}
 
 	var conn *grpc.ClientConn
-	conn, err := grpc.Dial(host, grpc.WithInsecure())
+	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %s", err)
 	}
@@ -55,25 +57,37 @@ func main() {
 	go restService.GetStream("http://"+host, message)
 	log.Println("Listening for stream")
 
-	go restService.WriteData()
+	go restService.WriteData(os.Stdin)
 
-	go func() {
-		for {
-			msg, ok := <-message
-			if !ok {
-				fmt.Println("Channel closed")
-				break
-			}
-			if msg.UserId == username {
-				continue
-			}
-			if string(msg.Text) != "\n" {
-				// Green console colour: 	\x1b[32m
-				// Reset console colour: 	\x1b[0m
-				fmt.Printf("\x1b[32m%s\x1b[0m → %s\n> ", msg.UserId, msg.Text)
-			}
+	go printMessages(message)
+
+	// Wait for Control C to exit
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt)
+
+	// Block until a signal is received
+	<-ch
+
+	// Stop the server
+	log.Println("\nStopping stream")
+}
+
+func printMessages(message chan *domain.Message) {
+	for {
+		msg, ok := <-message
+		if !ok {
+			fmt.Println("Channel closed")
+			break
 		}
-	}()
-
-	select {}
+		if msg.UserId == username {
+			continue
+		}
+		if string(msg.Text) != "\n" {
+			// if msg.UserId != username {
+			// Green console colour: 	\x1b[32m
+			// Reset console colour: 	\x1b[0m
+			fmt.Printf("\x1b[32m%s\x1b[0m → %s\n> ", msg.UserId, msg.Text)
+			// }
+		}
+	}
 }

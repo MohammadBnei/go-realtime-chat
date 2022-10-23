@@ -10,29 +10,26 @@ import (
 )
 
 type Service interface {
-	GetStream(host string, msg chan *domain.Message) error
-	WriteData(rw io.Reader)
+	GetStream(oomId string, msg chan *domain.Message) error
+	WriteData(username, roomId string, rw io.Reader)
 }
 
 type grpcService struct {
-	username, roomId, host string
-	api                    messagePB.RoomClient
+	host string
+	api  messagePB.RoomClient
 }
 type GrpcServiceConfig struct {
-	Username string
-	RoomId   string
-	Host     string
-	Api      messagePB.RoomClient
+	Host string
+	Api  messagePB.RoomClient
 }
 
 func NewGrpcService(config *GrpcServiceConfig) Service {
-	return &grpcService{config.Username, config.RoomId, config.Host, config.Api}
+	return &grpcService{config.Host, config.Api}
 }
 
-func (rs *grpcService) GetStream(host string, msg chan *domain.Message) error {
+func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error {
 	src, err := rs.api.StreamRoom(context.Background(), &messagePB.RoomRequest{
-		UserId: rs.username,
-		RoomId: rs.roomId,
+		RoomId: roomId,
 	})
 	if err != nil {
 		return err
@@ -54,7 +51,7 @@ func (rs *grpcService) GetStream(host string, msg chan *domain.Message) error {
 	}
 }
 
-func (rs *grpcService) WriteData(rw io.Reader) {
+func (rs *grpcService) WriteData(username, roomId string, rw io.Reader) {
 	stdReader := bufio.NewReader(rw)
 
 	for {
@@ -69,8 +66,8 @@ func (rs *grpcService) WriteData(rw io.Reader) {
 		}
 		sendData = sendData[:len(sendData)-1]
 		res, err := rs.api.PostToRoom(context.Background(), &messagePB.Message{
-			UserId: rs.username,
-			RoomId: rs.roomId,
+			UserId: username,
+			RoomId: roomId,
 			Text:   sendData,
 		})
 		if err != nil {

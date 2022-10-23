@@ -10,6 +10,8 @@ import (
 	"rc-client/messagePB"
 	"rc-client/service"
 
+	"github.com/gosuri/uilive"
+	"github.com/rivo/tview"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -23,22 +25,6 @@ func main() {
 	}
 	message := make(chan *domain.Message, 100)
 
-	for username == "" {
-		fmt.Print("Enter your username : ")
-		_, err := fmt.Scan(&username)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-	for roomId == "" {
-
-		fmt.Print("Enter the room name : ")
-		_, err := fmt.Scan(&roomId)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-
 	var conn *grpc.ClientConn
 	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -47,19 +33,51 @@ func main() {
 	defer conn.Close()
 
 	api := messagePB.NewRoomClient(conn)
-	restService := service.NewGrpcService(&service.GrpcServiceConfig{
-		Username: username,
-		RoomId:   roomId,
-		Host:     "http://" + host,
-		Api:      api,
+	grpcService := service.NewGrpcService(&service.GrpcServiceConfig{
+		Host: "http://" + host,
+		Api:  api,
 	})
 
-	go restService.GetStream("http://"+host, message)
-	log.Println("Listening for stream")
+	go grpcService.WriteData("", "", os.Stdin)
 
-	go restService.WriteData(os.Stdin)
+	// go printMessages(message)
 
-	go printMessages(message)
+	go func() {
+		newPrimitive := func(text string) tview.Primitive {
+			return tview.NewTextView().
+				SetTextAlign(tview.AlignCenter).
+				SetText(text)
+		}
+		main := newPrimitive("Main content")
+		form := tview.NewForm().
+			AddInputField("Username", "", 20, nil, func(text string) {
+				username = text
+			}).
+			AddInputField("Room", "", 20, nil, func(text string) {
+				roomId = text
+			}).
+			AddButton("Save", func() {
+				go grpcService.GetStream(roomId, message)
+			})
+
+		grid := tview.NewGrid().
+			SetRows(3, 0, 3).
+			SetColumns(30, 0, 30).
+			SetBorders(true).
+			AddItem(newPrimitive(fmt.Sprintf("Room\t: %s\nUsername\t: %s", roomId, username)), 0, 0, 1, 3, 0, 0, false).
+			AddItem(newPrimitive("Made with ❤️"), 2, 0, 1, 3, 0, 0, false)
+
+		// Layout for screens narrower than 100 cells (menu and side bar are hidden).
+		grid.AddItem(main, 1, 0, 1, 3, 0, 0, false)
+
+		// Layout for screens wider than 100 cells.
+		grid.AddItem(main, 1, 1, 1, 1, 0, 100, false).
+			AddItem(form, 1, 2, 1, 1, 0, 100, false)
+
+		if err := tview.NewApplication().SetRoot(grid, true).EnableMouse(true).Run(); err != nil {
+			panic(err)
+		}
+	}()
 
 	// Wait for Control C to exit
 	ch := make(chan os.Signal, 1)
@@ -73,6 +91,9 @@ func main() {
 }
 
 func printMessages(message chan *domain.Message) {
+	writer := uilive.New()
+	// start listening for updates and render
+	writer.Start()
 	for {
 		msg, ok := <-message
 		if !ok {
@@ -86,7 +107,7 @@ func printMessages(message chan *domain.Message) {
 			// if msg.UserId != username {
 			// Green console colour: 	\x1b[32m
 			// Reset console colour: 	\x1b[0m
-			fmt.Printf("\x1b[32m%s\x1b[0m → %s\n> ", msg.UserId, msg.Text)
+			fmt.Fprintf(writer, "\x1b[32m%s\x1b[0m → %s\n> ", msg.UserId, msg.Text)
 			// }
 		}
 	}

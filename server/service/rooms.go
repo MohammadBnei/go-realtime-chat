@@ -78,6 +78,9 @@ func (m *manager) deleteBroadcast(roomid string) {
 	}
 }
 
+/*
+Get the room with the id roomid, or creates and registers it
+*/
 func (m *manager) room(roomid string) broadcast.Broadcaster {
 	b, ok := m.roomChannels[roomid]
 	if !ok {

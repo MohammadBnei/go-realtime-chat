@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/spf13/viper"
@@ -21,10 +22,16 @@ func ParseConfig() config {
 	readConfig := config{}
 
 	log.Println("parsing config file")
+	viper.SetConfigType("yml")
+	viper.AddConfigPath(".")    // optionally look for config in the working directory
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		panic(fmt.Errorf("fatal error config file: %w", err))
+	}
 
 	viper.AutomaticEnv()
 
-	err := viper.Unmarshal(&readConfig)
+	err = viper.Unmarshal(&readConfig)
 	if err != nil {
 		log.Fatal("error unmarshing config file in struct : ", err)
 	}

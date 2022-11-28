@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	adapter "realtime-chat/adapter/rest"
-	"realtime-chat/cmd/rest/docs"
-	"realtime-chat/config"
-	"realtime-chat/service"
+
+	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/rest"
+	"github.com/MohammadBnei/realtime-chat/server/cmd/rest/docs"
+	"github.com/MohammadBnei/realtime-chat/server/config"
+	"github.com/MohammadBnei/realtime-chat/server/service"
 
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"

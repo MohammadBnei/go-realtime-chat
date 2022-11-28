@@ -3,7 +3,8 @@ package adapter
 import (
 	"io"
 	"net/http"
-	"realtime-chat/service"
+
+	"github.com/MohammadBnei/realtime-chat/server/service"
 
 	"github.com/gin-gonic/gin"
 )

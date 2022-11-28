@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	adapter "realtime-chat/adapter/html"
-	"realtime-chat/config"
-	"realtime-chat/service"
+
+	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/html"
+	"github.com/MohammadBnei/realtime-chat/server/config"
+	"github.com/MohammadBnei/realtime-chat/server/service"
 
 	"github.com/gin-gonic/gin"
 )

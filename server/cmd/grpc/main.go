@@ -5,10 +5,11 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	adapter "realtime-chat/adapter/grpc"
-	"realtime-chat/config"
-	"realtime-chat/messagePB"
-	"realtime-chat/service"
+
+	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/grpc"
+	"github.com/MohammadBnei/realtime-chat/server/config"
+	"github.com/MohammadBnei/realtime-chat/server/messagePB"
+	"github.com/MohammadBnei/realtime-chat/server/service"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

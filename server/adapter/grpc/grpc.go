@@ -3,9 +3,10 @@ package adapter
 import (
 	"context"
 	"fmt"
-	"realtime-chat/messagePB"
-	"realtime-chat/service"
 	"time"
+
+	"github.com/MohammadBnei/realtime-chat/server/messagePB"
+	"github.com/MohammadBnei/realtime-chat/server/service"
 )
 
 type grpcAdapter struct {
@@ -29,7 +30,10 @@ func (ga *grpcAdapter) PostToRoom(ctx context.Context, msg *messagePB.Message) (
 	}, nil
 }
 func (ga *grpcAdapter) DeleteRoom(ctx context.Context, rq *messagePB.RoomRequest) (*messagePB.RoomResponse, error) {
-	return nil, nil
+	ga.roomManager.DeleteBroadcast(rq.GetRoomId())
+	return &messagePB.RoomResponse{
+		Success: true,
+	}, nil
 }
 
 func (ga *grpcAdapter) StreamRoom(rr *messagePB.RoomRequest, srs messagePB.Room_StreamRoomServer) error {

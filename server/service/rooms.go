@@ -1,14 +1,12 @@
 package service
 
-import "realtime-chat/broadcast"
-
-var managerSingleton *manager
+import "github.com/MohammadBnei/realtime-chat/server/broadcast"
 
 type Manager interface {
 	OpenListener(roomid string) chan interface{}
 	CloseListener(roomid string, channel chan interface{})
-	DeleteBroadcast(roomid string)
 	Submit(userid, roomid, text string)
+	DeleteBroadcast(roomid string)
 }
 
 type Message struct {
@@ -29,6 +27,8 @@ type manager struct {
 	delete       chan string
 	messages     chan *Message
 }
+
+var managerSingleton *manager
 
 func GetRoomManager() Manager {
 	if managerSingleton == nil {

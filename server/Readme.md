@@ -345,5 +345,6 @@ It's done ! Now you do the rest.
 ## REST Adapter
 
 Implement a REST adapter and the main.go entrypoint.
-Use SSE for client side streaming.
+We advise you to use [go-gin](https://gin-gonic.com), it will be easy to code SSE for client side streaming.
+
 You will find the HTML template [here](adapter/html/template.go). It will give you a client to quickly test your application.

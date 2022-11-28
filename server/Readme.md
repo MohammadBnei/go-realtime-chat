@@ -346,3 +346,4 @@ It's done ! Now you do the rest.
 
 Implement a REST adapter and the main.go entrypoint.
 Use SSE for client side streaming.
+You will find the HTML template [here](adapter/html/template.go). It will give you a client to quickly test your application.

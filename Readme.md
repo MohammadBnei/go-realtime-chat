@@ -340,6 +340,37 @@ func GetRoomManager() Manager {
 }
 ```
 
+To test it out, we've provided you with a basic gin HTML package. Create a main.go at the root and write the following :
+```golang
+package main
+
+import (
+	"fmt"
+
+	adapter "github.com/MohammadBnei/go-html-adapter"
+	"$YOUR_GOMODULE/service"
+
+	"github.com/gin-gonic/gin"
+)
+
+var roomManager service.Manager
+
+func main() {
+	roomManager = service.GetRoomManager()
+	adapter := adapter.NewGinHTMLAdapter(roomManager)
+	router := gin.Default()
+	router.SetHTMLTemplate(adapter.Template)
+
+	router.GET("/room/:roomid", adapter.GetRoom)
+	router.POST("/room/:roomid", adapter.PostRoom)
+	router.DELETE("/room/:roomid", adapter.DeleteRoom)
+	router.GET("/stream/:roomid", adapter.Stream)
+
+	router.Run(fmt.Sprintf(":%v", 8080))
+}
+``` 
+Start it and open your browser to [http://localhost:8080/room/test]. You can open a second tab and verify that the messages are correctly sent and received.
+
 It's done ! Now you do the rest.
 
 ## REST Adapter

@@ -347,7 +347,7 @@ package main
 import (
 	"fmt"
 
-	adapter "github.com/MohammadBnei/go-html-adapter"
+	adapter "github.com/MohammadBnei/go-html-adapter/adapterHTML"
 	"$YOUR_GOMODULE/service"
 
 	"github.com/gin-gonic/gin"
@@ -378,4 +378,8 @@ It's done ! Now you do the rest.
 Implement a REST adapter and the main.go entrypoint.
 We advise you to use [go-gin](https://gin-gonic.com), it will be easy to code SSE for client side streaming.
 
-You will find the HTML template [here](adapter/html/template.go). It will give you a client to quickly test your application.
+You will find the HTML template [here](/server/adapter/html/template.go). It will give you a client to quickly test your application.
+
+You have to create 2 routes :
+ - The **stream** route, which will take a *roomId* and stream messages
+ - the **submit** route, which will post messages. Each message will have a *userId*, *roomId*, and *text*.

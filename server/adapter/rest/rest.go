@@ -55,7 +55,7 @@ func (ga *ginAdapter) Stream(c *gin.Context) {
 		case <-clientGone:
 			return false
 		case message := <-listener:
-			serviceMsg, ok := message.(service.Message)
+			serviceMsg, ok := message.(*service.Message)
 			if !ok {
 				c.SSEvent("message", message)
 				return false

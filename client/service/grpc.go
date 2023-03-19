@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"rc-client/domain"
-	"rc-client/messagePB"
+
+	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
+	"buf.build/gen/go/bneiconseil/go-chat/protocolbuffers/go/message"
 )
 
 type Service interface {
@@ -16,11 +18,11 @@ type Service interface {
 
 type grpcService struct {
 	host string
-	api  messagePB.RoomClient
+	api  messagegrpc.RoomClient
 }
 type GrpcServiceConfig struct {
 	Host string
-	Api  messagePB.RoomClient
+	Api  messagegrpc.RoomClient
 }
 
 func NewGrpcService(config *GrpcServiceConfig) Service {
@@ -28,7 +30,7 @@ func NewGrpcService(config *GrpcServiceConfig) Service {
 }
 
 func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error {
-	src, err := rs.api.StreamRoom(context.Background(), &messagePB.RoomRequest{
+	src, err := rs.api.StreamRoom(context.Background(), &message.RoomRequest{
 		RoomId: roomId,
 	})
 	if err != nil {
@@ -36,8 +38,10 @@ func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error 
 	}
 
 	for {
-		var newMsg messagePB.Message
-		err := src.RecvMsg(&newMsg)
+		newMsg, err := src.Recv()
+		if err == io.EOF {
+			return src.CloseSend()
+		}
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -65,7 +69,7 @@ func (rs *grpcService) WriteData(username, roomId string, rw io.Reader) {
 			continue
 		}
 		sendData = sendData[:len(sendData)-1]
-		res, err := rs.api.PostToRoom(context.Background(), &messagePB.Message{
+		res, err := rs.api.PostToRoom(context.Background(), &message.Message{
 			UserId: username,
 			RoomId: roomId,
 			Text:   sendData,

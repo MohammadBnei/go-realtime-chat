@@ -7,9 +7,9 @@ import (
 	"os/signal"
 
 	"rc-client/domain"
-	"rc-client/messagePB"
 	"rc-client/service"
 
+	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"github.com/gosuri/uilive"
 	"github.com/rivo/tview"
 	"google.golang.org/grpc"
@@ -21,7 +21,7 @@ var username, roomId string
 func main() {
 	host := os.Getenv("CHAT_HOST")
 	if host == "" {
-		host = "localhost:4002"
+		host = "localhost:4000"
 	}
 	message := make(chan *domain.Message, 100)
 
@@ -32,7 +32,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	api := messagePB.NewRoomClient(conn)
+	api := messagegrpc.NewRoomClient(conn)
 	grpcService := service.NewGrpcService(&service.GrpcServiceConfig{
 		Host: "http://" + host,
 		Api:  api,

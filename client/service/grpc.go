@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -12,25 +11,23 @@ import (
 )
 
 type Service interface {
-	GetStream(oomId string, msg chan *domain.Message) error
-	WriteData(username, roomId string, rw io.Reader)
+	GetStream(roomId string, msg chan *domain.Message) error
+	PostMessage(username, roomId, text string)
 }
 
 type grpcService struct {
-	host string
-	api  messagegrpc.RoomClient
+	api messagegrpc.RoomClient
 }
 type GrpcServiceConfig struct {
-	Host string
-	Api  messagegrpc.RoomClient
+	Api messagegrpc.RoomClient
 }
 
-func NewGrpcService(config *GrpcServiceConfig) Service {
-	return &grpcService{config.Host, config.Api}
+func NewGrpcService(api messagegrpc.RoomClient) Service {
+	return &grpcService{api}
 }
 
 func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error {
-	src, err := rs.api.StreamRoom(context.Background(), &message.RoomRequest{
+	streamClient, err := rs.api.StreamRoom(context.Background(), &message.RoomRequest{
 		RoomId: roomId,
 	})
 	if err != nil {
@@ -38,9 +35,9 @@ func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error 
 	}
 
 	for {
-		newMsg, err := src.Recv()
+		newMsg, err := streamClient.Recv()
 		if err == io.EOF {
-			return src.CloseSend()
+			return streamClient.CloseSend()
 		}
 		if err != nil {
 			fmt.Println(err)
@@ -55,32 +52,10 @@ func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error 
 	}
 }
 
-func (rs *grpcService) WriteData(username, roomId string, rw io.Reader) {
-	stdReader := bufio.NewReader(rw)
-
-	for {
-		fmt.Print("> ")
-		sendData, err := stdReader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Error", err)
-			break
-		}
-		if sendData == "" || sendData == "\n" {
-			continue
-		}
-		sendData = sendData[:len(sendData)-1]
-		res, err := rs.api.PostToRoom(context.Background(), &message.Message{
-			UserId: username,
-			RoomId: roomId,
-			Text:   sendData,
-		})
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		if !res.Success {
-			fmt.Println("Something went wrong")
-		}
-	}
+func (rs *grpcService) PostMessage(username, roomId, text string) {
+	rs.api.PostToRoom(context.Background(), &message.Message{
+		UserId: username,
+		RoomId: roomId,
+		Text:   text,
+	})
 }

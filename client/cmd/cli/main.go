@@ -1,16 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
+	"strings"
 
 	"rc-client/domain"
 	"rc-client/service"
 
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
-	"github.com/gosuri/uilive"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -23,7 +24,7 @@ func main() {
 	if host == "" {
 		host = "localhost:4000"
 	}
-	message := make(chan *domain.Message, 100)
+	messages := make(chan *domain.Message, 100)
 
 	var conn *grpc.ClientConn
 	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -33,82 +34,75 @@ func main() {
 	defer conn.Close()
 
 	api := messagegrpc.NewRoomClient(conn)
-	grpcService := service.NewGrpcService(&service.GrpcServiceConfig{
-		Host: "http://" + host,
-		Api:  api,
-	})
+	chatService := service.NewGrpcService(api)
 
-	go grpcService.WriteData("", "", os.Stdin)
+	username = StringPrompt("Username : ")
+	roomId = StringPrompt("Room Id : ")
 
-	// go printMessages(message)
+	go chatService.GetStream(roomId, messages)
 
-	go func() {
-		newPrimitive := func(text string) tview.Primitive {
-			return tview.NewTextView().
-				SetTextAlign(tview.AlignCenter).
-				SetText(text)
+	app := tview.NewApplication().EnableMouse(true)
+
+	newPrimitive := func(text string) tview.Primitive {
+		return tview.NewTextView().
+			SetTextAlign(tview.AlignCenter).
+			SetText(text)
+	}
+
+	list := tview.NewList().
+		AddItem("Messages", "", rune(0), nil).
+		SetMainTextColor(tcell.ColorGreenYellow).
+		SetSecondaryTextColor(tcell.ColorDimGray)
+
+	go func(list *tview.List) {
+		for m := range messages {
+			if m.UserId == username {
+				list.AddItem(m.Text, fmt.Sprintf("<- %s", m.UserId), rune(0), nil)
+			} else {
+				list.AddItem(m.Text, fmt.Sprintf("-> %s", m.UserId), rune(0), nil)
+			}
+			app.Draw()
 		}
-		main := newPrimitive("Main content")
-		form := tview.NewForm().
-			AddInputField("Username", "", 20, nil, func(text string) {
-				username = text
-			}).
-			AddInputField("Room", "", 20, nil, func(text string) {
-				roomId = text
-			}).
-			AddButton("Save", func() {
-				go grpcService.GetStream(roomId, message)
-			})
+	}(list)
 
-		grid := tview.NewGrid().
-			SetRows(3, 0, 3).
-			SetColumns(30, 0, 30).
-			SetBorders(true).
-			AddItem(newPrimitive(fmt.Sprintf("Room\t: %s\nUsername\t: %s", roomId, username)), 0, 0, 1, 3, 0, 0, false).
-			AddItem(newPrimitive("Made with ❤️"), 2, 0, 1, 3, 0, 0, false)
+	inputField := tview.NewInputField().
+		SetLabel("Enter a message: ").
+		SetFieldWidth(255)
 
-		// Layout for screens narrower than 100 cells (menu and side bar are hidden).
-		grid.AddItem(main, 1, 0, 1, 3, 0, 0, false)
+	inputField.
+		SetDoneFunc(func(key tcell.Key) {
+			switch key {
+			case tcell.KeyEscape:
+				app.Stop()
+			case tcell.KeyEnter:
+				chatService.PostMessage(username, roomId, inputField.GetText())
+				inputField.SetText("")
+			}
+		})
 
-		// Layout for screens wider than 100 cells.
-		grid.AddItem(main, 1, 1, 1, 1, 0, 100, false).
-			AddItem(form, 1, 2, 1, 1, 0, 100, false)
+	grid := tview.NewGrid().
+		SetRows(2, 0, 2).
+		SetBorders(true).
+		AddItem(newPrimitive(fmt.Sprintf("Room\t: %s\nUsername\t: %s", roomId, username)), 0, 0, 1, 3, 0, 0, false).
+		AddItem(inputField, 1, 0, 1, 1, 0, 0, false).
+		AddItem(list, 1, 1, 1, 2, 0, 0, false)
 
-		if err := tview.NewApplication().SetRoot(grid, true).EnableMouse(true).Run(); err != nil {
-			panic(err)
-		}
-	}()
+	if err := app.SetRoot(grid, true).SetFocus(inputField).Run(); err != nil {
+		panic(err)
+	}
 
-	// Wait for Control C to exit
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, os.Interrupt)
-
-	// Block until a signal is received
-	<-ch
-
-	// Stop the server
-	log.Println("\nStopping stream")
 }
 
-func printMessages(message chan *domain.Message) {
-	writer := uilive.New()
-	// start listening for updates and render
-	writer.Start()
+// StringPrompt asks for a string value using the label
+func StringPrompt(label string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
 	for {
-		msg, ok := <-message
-		if !ok {
-			fmt.Println("Channel closed")
+		fmt.Fprint(os.Stderr, label+" ")
+		s, _ = r.ReadString('\n')
+		if s != "" {
 			break
 		}
-		if msg.UserId == username {
-			continue
-		}
-		if string(msg.Text) != "\n" {
-			// if msg.UserId != username {
-			// Green console colour: 	\x1b[32m
-			// Reset console colour: 	\x1b[0m
-			fmt.Fprintf(writer, "\x1b[32m%s\x1b[0m → %s\n> ", msg.UserId, msg.Text)
-			// }
-		}
 	}
+	return strings.TrimSpace(s)
 }

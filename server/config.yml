@@ -1,2 +1,2 @@
 serverConfig:
-  port: "4001"
+  port: 4000

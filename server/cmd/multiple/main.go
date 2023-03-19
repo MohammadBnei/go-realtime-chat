@@ -7,11 +7,11 @@ import (
 	"os"
 	"os/signal"
 
+	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/grpc"
 	html "github.com/MohammadBnei/realtime-chat/server/adapter/html"
 	rest "github.com/MohammadBnei/realtime-chat/server/adapter/rest"
 	"github.com/MohammadBnei/realtime-chat/server/cmd/rest/docs"
-	"github.com/MohammadBnei/realtime-chat/server/messagePB"
 	"github.com/MohammadBnei/realtime-chat/server/service"
 
 	"github.com/gin-gonic/gin"
@@ -79,7 +79,7 @@ func StartGrpc(port string) {
 
 	server := adapter.NewGrpcAdapter(roomManager)
 
-	messagePB.RegisterRoomServer(grpcServer, server)
+	messagegrpc.RegisterRoomServer(grpcServer, server)
 	reflection.Register(grpcServer)
 	go func() {
 		log.Println("gRPC Server Started on : " + port)

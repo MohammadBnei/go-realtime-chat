@@ -6,9 +6,9 @@ import (
 	"os"
 	"os/signal"
 
+	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/grpc"
 	"github.com/MohammadBnei/realtime-chat/server/config"
-	"github.com/MohammadBnei/realtime-chat/server/messagePB"
 	"github.com/MohammadBnei/realtime-chat/server/service"
 
 	"google.golang.org/grpc"
@@ -28,7 +28,7 @@ func main() {
 
 	server := adapter.NewGrpcAdapter(roomManager)
 
-	messagePB.RegisterRoomServer(grpcServer, server)
+	messagegrpc.RegisterRoomServer(grpcServer, server)
 	reflection.Register(grpcServer)
 	go func() {
 		log.Println("gRPC Server Started on : " + config.ServerConfig.Port)

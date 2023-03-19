@@ -36,8 +36,6 @@ func ParseConfig() config {
 		log.Fatal("error unmarshing config file in struct : ", err)
 	}
 
-	readConfig.ServerConfig.Port = viper.Get("port").(string)
-
 	log.Println("Env variable parsed successfully")
 
 	return readConfig

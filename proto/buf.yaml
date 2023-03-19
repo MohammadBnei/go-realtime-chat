@@ -1,0 +1,8 @@
+version: v1
+name: buf.build/bneiconseil/go-chat
+breaking:
+  use:
+    - FILE
+lint:
+  use:
+    - DEFAULT

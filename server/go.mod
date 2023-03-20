@@ -3,16 +3,14 @@ module github.com/MohammadBnei/realtime-chat/server
 go 1.19
 
 require (
+	buf.build/gen/go/bneiconseil/go-chat/grpc/go v1.3.0-20230319184905-b3cf0a723141.1
+	buf.build/gen/go/bneiconseil/go-chat/protocolbuffers/go v1.28.1-20230319184905-b3cf0a723141.4
 	github.com/gin-gonic/gin v1.8.1
 	github.com/spf13/viper v1.13.0
 	google.golang.org/grpc v1.53.0
-	google.golang.org/protobuf v1.30.0
 )
 
-require (
-	buf.build/gen/go/bneiconseil/go-chat/grpc/go v1.3.0-20230319184905-b3cf0a723141.1 // indirect
-	buf.build/gen/go/bneiconseil/go-chat/protocolbuffers/go v1.30.0-20230319184905-b3cf0a723141.1 // indirect
-)
+require google.golang.org/protobuf v1.28.1 // indirect
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

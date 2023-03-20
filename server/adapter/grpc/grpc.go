@@ -3,11 +3,11 @@ package adapter
 import (
 	"context"
 	"fmt"
+	"realtime-chat/service"
 	"time"
 
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"buf.build/gen/go/bneiconseil/go-chat/protocolbuffers/go/message"
-	"github.com/MohammadBnei/realtime-chat/server/service"
 )
 
 type grpcAdapter struct {
@@ -15,7 +15,7 @@ type grpcAdapter struct {
 	roomManager service.Manager
 }
 
-func NewGrpcAdapter(rm service.Manager) *grpcAdapter {
+func NewGrpcAdapter(rm service.Manager) messagegrpc.RoomServer {
 	return &grpcAdapter{roomManager: rm}
 }
 
@@ -31,10 +31,7 @@ func (ga *grpcAdapter) PostToRoom(ctx context.Context, msg *message.Message) (*m
 	}, nil
 }
 func (ga *grpcAdapter) DeleteRoom(ctx context.Context, rq *message.RoomRequest) (*message.RoomResponse, error) {
-	ga.roomManager.DeleteBroadcast(rq.GetRoomId())
-	return &message.RoomResponse{
-		Success: true,
-	}, nil
+	return nil, nil
 }
 
 func (ga *grpcAdapter) StreamRoom(rr *message.RoomRequest, srs messagegrpc.Room_StreamRoomServer) error {

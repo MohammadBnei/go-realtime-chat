@@ -39,5 +39,5 @@ func main() {
 
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	router.Run(fmt.Sprintf(":%v", config.ParseConfig().ServerConfig.Port))
+	router.Run(fmt.Sprintf(":%v", config.ParseConfig().Port))
 }

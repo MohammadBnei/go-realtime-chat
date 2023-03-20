@@ -18,6 +18,7 @@ message RoomRequest {
 message RoomResponse {
   bool created = 1;
   bool success = 2;
+  string data = 3;
 }
 
 service Room {

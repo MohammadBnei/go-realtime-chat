@@ -1,16 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
-	"rc-client/client/chat"
+	"rc-client/domain"
 	"rc-client/service"
 
-	sse "astuart.co/go-sse"
-	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
+	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var username, roomId string
@@ -18,61 +22,92 @@ var username, roomId string
 func main() {
 	host := os.Getenv("CHAT_HOST")
 	if host == "" {
-		host = "localhost:4001"
+		host = "localhost:4000"
 	}
-	message := make(chan *sse.Event, 100)
+	messages := make(chan *domain.Message, 100)
+	panicChan := make(chan error)
 
-	for username == "" {
-		fmt.Print("Enter your username : ")
-		_, err := fmt.Scan(&username)
-		if err != nil {
-			fmt.Println(err)
+	var conn *grpc.ClientConn
+	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %s", err)
+	}
+	defer conn.Close()
+
+	api := messagegrpc.NewRoomClient(conn)
+	chatService := service.NewGrpcService(api, panicChan)
+
+	username = StringPrompt("Username : ")
+	roomId = StringPrompt("Room Id : ")
+
+	go chatService.GetStream(roomId, messages)
+
+	if err := <-panicChan; err != nil {
+		panic(err)
+	}
+
+	app := tview.NewApplication().EnableMouse(true)
+
+	newPrimitive := func(text string) tview.Primitive {
+		return tview.NewTextView().
+			SetTextAlign(tview.AlignCenter).
+			SetText(text)
+	}
+
+	list := tview.NewList().
+		AddItem("Messages", "", rune(0), nil).
+		SetMainTextColor(tcell.ColorGreenYellow).
+		SetSecondaryTextColor(tcell.ColorDimGray)
+
+	go func(list *tview.List) {
+		for m := range messages {
+			if m.UserId == username {
+				list.InsertItem(0, m.Text, fmt.Sprintf("<- %s", m.UserId), rune(0), nil)
+			} else {
+				list.InsertItem(0, m.Text, fmt.Sprintf("-> %s", m.UserId), rune(0), nil)
+			}
+			app.Draw()
+		}
+	}(list)
+
+	inputField := tview.NewInputField().
+		SetLabel("Enter a message: ").
+		SetFieldWidth(255)
+
+	inputField.
+		SetDoneFunc(func(key tcell.Key) {
+			switch key {
+			case tcell.KeyEscape:
+				app.Stop()
+			case tcell.KeyEnter:
+				chatService.PostMessage(username, roomId, inputField.GetText())
+				inputField.SetText("")
+			}
+		})
+
+	grid := tview.NewGrid().
+		SetRows(2, 0, 2).
+		SetBorders(true).
+		AddItem(newPrimitive(fmt.Sprintf("Room\t: %s\nUsername\t: %s", roomId, username)), 0, 0, 1, 3, 0, 0, false).
+		AddItem(inputField, 1, 0, 1, 1, 0, 0, false).
+		AddItem(list, 1, 1, 1, 2, 0, 0, false)
+
+	if err := app.SetRoot(grid, true).SetFocus(inputField).Run(); err != nil {
+		panic(err)
+	}
+
+}
+
+// StringPrompt asks for a string value using the label
+func StringPrompt(label string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprint(os.Stderr, label+" ")
+		s, _ = r.ReadString('\n')
+		if s != "" {
+			break
 		}
 	}
-	for roomId == "" {
-
-		fmt.Print("Enter the room name : ")
-		_, err := fmt.Scan(&roomId)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-
-	api := chat.New(httptransport.New(host, "/api", nil), strfmt.Default)
-	restService := service.NewRestService(&service.RestServiceConfig{
-		Username: username,
-		RoomId:   roomId,
-		Host:     "http://" + host,
-		Api:      api,
-	})
-
-	go restService.GetStream("http://"+host, message)
-	log.Println("Listening for stream")
-
-	go restService.WriteData()
-
-	go func() {
-		for {
-			msg, ok := <-message
-			if !ok {
-				fmt.Println("Channel closed")
-				break
-			}
-			str := make([]byte, 1024)
-			n, err := msg.Data.Read(str)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if n == 0 {
-				continue
-			}
-			if string(str) != "\n" {
-				// Green console colour: 	\x1b[32m
-				// Reset console colour: 	\x1b[0m
-				fmt.Printf("\x1b[32m%s\n\x1b[0m> ", str)
-			}
-		}
-	}()
-
-	select {}
+	return strings.TrimSpace(s)
 }

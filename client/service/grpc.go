@@ -16,14 +16,12 @@ type Service interface {
 }
 
 type grpcService struct {
-	api messagegrpc.RoomClient
-}
-type GrpcServiceConfig struct {
-	Api messagegrpc.RoomClient
+	api       messagegrpc.RoomClient
+	panicChan chan error
 }
 
-func NewGrpcService(api messagegrpc.RoomClient) Service {
-	return &grpcService{api}
+func NewGrpcService(api messagegrpc.RoomClient, panicChan chan error) Service {
+	return &grpcService{api, panicChan}
 }
 
 func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error {
@@ -31,8 +29,10 @@ func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error 
 		RoomId: roomId,
 	})
 	if err != nil {
-		return err
+		rs.panicChan <- err
 	}
+
+	rs.panicChan <- nil
 
 	for {
 		newMsg, err := streamClient.Recv()

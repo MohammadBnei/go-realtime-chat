@@ -25,6 +25,7 @@ func main() {
 		host = "localhost:4000"
 	}
 	messages := make(chan *domain.Message, 100)
+	panicChan := make(chan error)
 
 	var conn *grpc.ClientConn
 	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -34,12 +35,16 @@ func main() {
 	defer conn.Close()
 
 	api := messagegrpc.NewRoomClient(conn)
-	chatService := service.NewGrpcService(api)
+	chatService := service.NewGrpcService(api, panicChan)
 
 	username = StringPrompt("Username : ")
 	roomId = StringPrompt("Room Id : ")
 
 	go chatService.GetStream(roomId, messages)
+
+	if err := <-panicChan; err != nil {
+		panic(err)
+	}
 
 	app := tview.NewApplication().EnableMouse(true)
 

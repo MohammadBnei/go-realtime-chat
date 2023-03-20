@@ -62,9 +62,9 @@ func main() {
 	go func(list *tview.List) {
 		for m := range messages {
 			if m.UserId == username {
-				list.AddItem(m.Text, fmt.Sprintf("<- %s", m.UserId), rune(0), nil)
+				list.InsertItem(0, m.Text, fmt.Sprintf("<- %s", m.UserId), rune(0), nil)
 			} else {
-				list.AddItem(m.Text, fmt.Sprintf("-> %s", m.UserId), rune(0), nil)
+				list.InsertItem(0, m.Text, fmt.Sprintf("-> %s", m.UserId), rune(0), nil)
 			}
 			app.Draw()
 		}

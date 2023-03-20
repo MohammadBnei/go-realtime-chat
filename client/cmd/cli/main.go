@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"rc-client/domain"
-	"rc-client/service"
+	"github.com/MohammadBnei/go-realtime-chat/client/domain"
+	"github.com/MohammadBnei/go-realtime-chat/client/service"
 
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"github.com/gdamore/tcell/v2"

@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"rc-client/domain"
+
+	"github.com/MohammadBnei/go-realtime-chat/client/domain"
 
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"buf.build/gen/go/bneiconseil/go-chat/protocolbuffers/go/message"

@@ -32,7 +32,6 @@ func ParseConfig() config {
 	viper.SetConfigType("yml") // REQUIRED if the config file does not have the extension in the name
 	viper.AddConfigPath(".")   // optionally look for config in the working directory
 	viper.BindEnv("Port")
-	err := viper.ReadInConfig()
 
 	if err != nil {
 		log.Fatal("error parsing config file : ", err)

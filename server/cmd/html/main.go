@@ -22,5 +22,5 @@ func main() {
 	router.DELETE("/room/:roomid", adapter.DeleteRoom)
 	router.GET("/stream/:roomid", adapter.Stream)
 
-	router.Run(fmt.Sprintf(":%v", config.ParseConfig().ServerConfig.Port))
+	router.Run(fmt.Sprintf(":%v", config.ParseConfig().Port))
 }

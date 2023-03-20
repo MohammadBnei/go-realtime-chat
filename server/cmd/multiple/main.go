@@ -10,9 +10,9 @@ import (
 	html "realtime-chat/adapter/html"
 	rest "realtime-chat/adapter/rest"
 	"realtime-chat/cmd/rest/docs"
-	"realtime-chat/messagePB"
 	"realtime-chat/service"
 
+	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -78,7 +78,7 @@ func StartGrpc(port string) {
 
 	server := adapter.NewGrpcAdapter(roomManager)
 
-	messagePB.RegisterRoomServer(grpcServer, server)
+	messagegrpc.RegisterRoomServer(grpcServer, server)
 	reflection.Register(grpcServer)
 	go func() {
 		log.Println("gRPC Server Started on : " + port)

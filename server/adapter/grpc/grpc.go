@@ -3,36 +3,38 @@ package adapter
 import (
 	"context"
 	"fmt"
-	"realtime-chat/messagePB"
 	"realtime-chat/service"
 	"time"
+
+	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
+	"buf.build/gen/go/bneiconseil/go-chat/protocolbuffers/go/message"
 )
 
 type grpcAdapter struct {
-	messagePB.UnimplementedRoomServer
+	messagegrpc.UnimplementedRoomServer
 	roomManager service.Manager
 }
 
-func NewGrpcAdapter(rm service.Manager) messagePB.RoomServer {
+func NewGrpcAdapter(rm service.Manager) messagegrpc.RoomServer {
 	return &grpcAdapter{roomManager: rm}
 }
 
-func (ga *grpcAdapter) GetRoom(ctx context.Context, rq *messagePB.RoomRequest) (*messagePB.RoomResponse, error) {
+func (ga *grpcAdapter) GetRoom(ctx context.Context, rq *message.RoomRequest) (*message.RoomResponse, error) {
 	return nil, nil
 }
 
-func (ga *grpcAdapter) PostToRoom(ctx context.Context, msg *messagePB.Message) (*messagePB.RoomResponse, error) {
+func (ga *grpcAdapter) PostToRoom(ctx context.Context, msg *message.Message) (*message.RoomResponse, error) {
 	ga.roomManager.Submit(msg.UserId, msg.RoomId, msg.Text)
 	logRequest(msg.RoomId, "Post to Room")
-	return &messagePB.RoomResponse{
+	return &message.RoomResponse{
 		Success: true,
 	}, nil
 }
-func (ga *grpcAdapter) DeleteRoom(ctx context.Context, rq *messagePB.RoomRequest) (*messagePB.RoomResponse, error) {
+func (ga *grpcAdapter) DeleteRoom(ctx context.Context, rq *message.RoomRequest) (*message.RoomResponse, error) {
 	return nil, nil
 }
 
-func (ga *grpcAdapter) StreamRoom(rr *messagePB.RoomRequest, srs messagePB.Room_StreamRoomServer) error {
+func (ga *grpcAdapter) StreamRoom(rr *message.RoomRequest, srs messagegrpc.Room_StreamRoomServer) error {
 	listener := ga.roomManager.OpenListener(rr.RoomId)
 	defer ga.roomManager.CloseListener(rr.RoomId, listener)
 	logRequest(rr.RoomId, "Stream Room")
@@ -46,7 +48,7 @@ func (ga *grpcAdapter) StreamRoom(rr *messagePB.RoomRequest, srs messagePB.Room_
 				continue
 			}
 
-			if err := srs.Send(&messagePB.Message{
+			if err := srs.Send(&message.Message{
 				UserId: serviceMsg.UserId,
 				RoomId: serviceMsg.RoomId,
 				Text:   serviceMsg.Text,

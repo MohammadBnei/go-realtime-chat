@@ -6,11 +6,12 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	adapter "realtime-chat/adapter/grpc"
-	html "realtime-chat/adapter/html"
-	rest "realtime-chat/adapter/rest"
-	"realtime-chat/cmd/rest/docs"
-	"realtime-chat/service"
+
+	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/grpc"
+	html "github.com/MohammadBnei/realtime-chat/server/adapter/html"
+	rest "github.com/MohammadBnei/realtime-chat/server/adapter/rest"
+	"github.com/MohammadBnei/realtime-chat/server/cmd/rest/docs"
+	"github.com/MohammadBnei/realtime-chat/server/service"
 
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"github.com/gin-gonic/gin"

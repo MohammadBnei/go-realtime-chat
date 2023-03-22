@@ -3,8 +3,9 @@ package adapter
 import (
 	"context"
 	"fmt"
-	"realtime-chat/service"
 	"time"
+
+	"github.com/MohammadBnei/realtime-chat/server/service"
 
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"buf.build/gen/go/bneiconseil/go-chat/protocolbuffers/go/message"

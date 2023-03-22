@@ -5,9 +5,10 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	adapter "realtime-chat/adapter/grpc"
-	"realtime-chat/config"
-	"realtime-chat/service"
+
+	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/grpc"
+	"github.com/MohammadBnei/realtime-chat/server/config"
+	"github.com/MohammadBnei/realtime-chat/server/service"
 
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"google.golang.org/grpc"
@@ -18,7 +19,7 @@ func main() {
 	roomManager := service.GetRoomManager()
 	config := config.ParseConfig()
 
-	lis, err := net.Listen("tcp", "0.0.0.0:"+config.Config.Port)
+	lis, err := net.Listen("tcp", "0.0.0.0:"+config.Port)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,7 +31,7 @@ func main() {
 	messagegrpc.RegisterRoomServer(grpcServer, server)
 	reflection.Register(grpcServer)
 	go func() {
-		log.Println("gRPC Server Started on : " + config.Config.Port)
+		log.Println("gRPC Server Started on : " + config.Port)
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatalf("failed to serve: %v", err)
 		}

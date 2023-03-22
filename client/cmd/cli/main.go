@@ -57,14 +57,20 @@ func main() {
 	list := tview.NewList().
 		AddItem("Messages", "", rune(0), nil).
 		SetMainTextColor(tcell.ColorGreenYellow).
-		SetSecondaryTextColor(tcell.ColorDimGray)
+		SetSecondaryTextColor(tcell.ColorBlanchedAlmond).
+		SetWrapAround(false)
+
+	list.
+		Box.
+		SetTitle("Messages").
+		SetBackgroundColor(tcell.ColorDimGray)
 
 	go func(list *tview.List) {
 		for m := range messages {
 			if m.UserId == username {
-				list.InsertItem(0, m.Text, fmt.Sprintf("<- %s", m.UserId), rune(0), nil)
+				list.AddItem(m.Text, fmt.Sprintf("<- %s", m.UserId), rune(0), nil).SetCurrentItem(-1)
 			} else {
-				list.InsertItem(0, m.Text, fmt.Sprintf("-> %s", m.UserId), rune(0), nil)
+				list.AddItem(m.Text, fmt.Sprintf("-> %s", m.UserId), rune(0), nil).SetCurrentItem(-1)
 			}
 			app.Draw()
 		}
@@ -89,8 +95,8 @@ func main() {
 		SetRows(2, 0, 2).
 		SetBorders(true).
 		AddItem(newPrimitive(fmt.Sprintf("Room\t: %s\nUsername\t: %s", roomId, username)), 0, 0, 1, 3, 0, 0, false).
-		AddItem(inputField, 1, 0, 1, 1, 0, 0, false).
-		AddItem(list, 1, 1, 1, 2, 0, 0, false)
+		AddItem(inputField, 2, 0, 1, 3, 0, 0, false).
+		AddItem(list, 1, 0, 1, 3, 0, 0, false)
 
 	if err := app.SetRoot(grid, true).SetFocus(inputField).Run(); err != nil {
 		panic(err)

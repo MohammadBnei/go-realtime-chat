@@ -73,10 +73,11 @@ func main() {
 	changeRoom := func(form *tview.Form) {
 		if newRoomId := form.GetFormItemByLabel("Room Id").(*tview.InputField).GetText(); newRoomId != roomId {
 			quitChan <- true
-			chatService.PostMessage(username, roomId, fmt.Sprintf("%s disconnected", username))
+			go chatService.PostMessage(username, roomId, fmt.Sprintf("%s disconnected", username))
 			roomId = form.GetFormItemByLabel("Room Id").(*tview.InputField).GetText()
 			getStream(roomId)
 			app.SetFocus(inputField)
+			go chatService.PostMessage(username, roomId, fmt.Sprintf("*%s connected*", username))
 		}
 	}
 
@@ -126,6 +127,8 @@ func main() {
 		AddItem(form, 0, 0, 1, 1, 0, 0, false).
 		AddItem(list, 0, 1, 1, 2, 0, 0, false).
 		AddItem(inputField, 1, 0, 1, 3, 0, 0, true)
+
+	go chatService.PostMessage(username, roomId, fmt.Sprintf("*%s connected to %s*", username, roomId))
 
 	if err := app.SetRoot(grid, true).Run(); err != nil {
 		panic(err)

@@ -32,13 +32,15 @@ func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error 
 	})
 	if err != nil {
 		rs.panicChan <- err
+		return err
 	}
 
 	rs.panicChan <- nil
 
 	serverMsgChannel := make(chan *message.Message)
 	errorChannel := make(chan error)
-	toChannel := func(streamClient messagegrpc.Room_StreamRoomClient, serverMsgChannel chan *message.Message, errorChannel chan error) {
+
+	go func(streamClient messagegrpc.Room_StreamRoomClient, serverMsgChannel chan *message.Message, errorChannel chan error) {
 		for {
 			newMsg, err := streamClient.Recv()
 			if err != nil {
@@ -47,9 +49,7 @@ func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error 
 			}
 			serverMsgChannel <- newMsg
 		}
-	}
-
-	go toChannel(streamClient, serverMsgChannel, errorChannel)
+	}(streamClient, serverMsgChannel, errorChannel)
 
 	for {
 		select {

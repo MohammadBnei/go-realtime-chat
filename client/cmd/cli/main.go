@@ -24,9 +24,7 @@ func main() {
 	if host == "" {
 		host = "localhost:4000"
 	}
-	messages := make(chan *domain.Message, 100)
-	panicChan := make(chan error)
-
+	roomId = "lobby"
 	var conn *grpc.ClientConn
 	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -34,47 +32,28 @@ func main() {
 	}
 	defer conn.Close()
 
+	messages := make(chan *domain.Message, 100)
+	panicChan := make(chan error)
+	quitChan := make(chan bool)
+
 	api := messagegrpc.NewRoomClient(conn)
-	chatService := service.NewGrpcService(api, panicChan)
+	chatService := service.NewGrpcService(api, panicChan, quitChan)
 
 	username = StringPrompt("Username : ")
-	roomId = StringPrompt("Room Id : ")
 
-	go chatService.GetStream(roomId, messages)
+	getStream := func(messages chan *domain.Message) func(roomId string) {
+		return func(roomId string) {
+			go chatService.GetStream(roomId, messages)
 
-	if err := <-panicChan; err != nil {
-		panic(err)
-	}
+			if err := <-panicChan; err != nil {
+				panic(err)
+			}
+		}
+	}(messages)
+
+	getStream(roomId)
 
 	app := tview.NewApplication().EnableMouse(true)
-
-	newPrimitive := func(text string) tview.Primitive {
-		return tview.NewTextView().
-			SetTextAlign(tview.AlignCenter).
-			SetText(text)
-	}
-
-	list := tview.NewList().
-		AddItem("Messages", "", rune(0), nil).
-		SetMainTextColor(tcell.ColorGreenYellow).
-		SetSecondaryTextColor(tcell.ColorBlanchedAlmond).
-		SetWrapAround(false)
-
-	list.
-		Box.
-		SetTitle("Messages").
-		SetBackgroundColor(tcell.ColorDimGray)
-
-	go func(list *tview.List) {
-		for m := range messages {
-			if m.UserId == username {
-				list.AddItem(m.Text, fmt.Sprintf("<- %s", m.UserId), rune(0), nil).SetCurrentItem(-1)
-			} else {
-				list.AddItem(m.Text, fmt.Sprintf("-> %s", m.UserId), rune(0), nil).SetCurrentItem(-1)
-			}
-			app.Draw()
-		}
-	}(list)
 
 	inputField := tview.NewInputField().
 		SetLabel("Enter a message: ").
@@ -91,14 +70,64 @@ func main() {
 			}
 		})
 
-	grid := tview.NewGrid().
-		SetRows(2, 0, 2).
-		SetBorders(true).
-		AddItem(newPrimitive(fmt.Sprintf("Room\t: %s\nUsername\t: %s", roomId, username)), 0, 0, 1, 3, 0, 0, false).
-		AddItem(inputField, 2, 0, 1, 3, 0, 0, false).
-		AddItem(list, 1, 0, 1, 3, 0, 0, false)
+	changeRoom := func(form *tview.Form) {
+		if newRoomId := form.GetFormItemByLabel("Room Id").(*tview.InputField).GetText(); newRoomId != roomId {
+			quitChan <- true
+			chatService.PostMessage(username, roomId, fmt.Sprintf("%s disconnected", username))
+			roomId = form.GetFormItemByLabel("Room Id").(*tview.InputField).GetText()
+			getStream(roomId)
+			app.SetFocus(inputField)
+		}
+	}
 
-	if err := app.SetRoot(grid, true).SetFocus(inputField).Run(); err != nil {
+	form := tview.NewForm().
+		AddInputField("Username", username, 20, nil, func(text string) { username = text }).
+		AddInputField("Room Id", roomId, 30, nil, nil)
+
+	form.GetFormItemByLabel("Room Id").
+		SetFinishedFunc(func(key tcell.Key) {
+			switch key {
+			case tcell.KeyEscape:
+				form.GetFormItemByLabel("Room Id").(*tview.InputField).SetText(roomId)
+			case tcell.KeyEnter:
+				changeRoom(form)
+			}
+		})
+
+	form.AddButton("Change Room", func() {
+		changeRoom(form)
+	})
+
+	list := tview.NewList().
+		AddItem("Messages", "", rune(0), nil).
+		SetMainTextColor(tcell.ColorGreenYellow).
+		SetSecondaryTextColor(tcell.ColorBlanchedAlmond).
+		SetWrapAround(false)
+
+	list.
+		Box.
+		SetTitle("Messages").
+		SetBackgroundColor(tcell.ColorDimGray)
+
+	go func(list *tview.List) {
+		for m := range messages {
+			if m.UserId == username {
+				list.AddItem(m.Text, fmt.Sprintf("-> %s", m.UserId), rune(0), nil).SetCurrentItem(-1)
+			} else {
+				list.AddItem(m.Text, fmt.Sprintf("<- %s", m.UserId), rune(0), nil).SetCurrentItem(-1)
+			}
+			app.Draw()
+		}
+	}(list)
+
+	grid := tview.NewGrid().
+		SetRows(0, 2).
+		SetBorders(true).
+		AddItem(form, 0, 0, 1, 1, 0, 0, false).
+		AddItem(list, 0, 1, 1, 2, 0, 0, false).
+		AddItem(inputField, 1, 0, 1, 3, 0, 0, true)
+
+	if err := app.SetRoot(grid, true).Run(); err != nil {
 		panic(err)
 	}
 

@@ -19,10 +19,11 @@ type Service interface {
 type grpcService struct {
 	api       messagegrpc.RoomClient
 	panicChan chan error
+	quitChan  chan bool
 }
 
-func NewGrpcService(api messagegrpc.RoomClient, panicChan chan error) Service {
-	return &grpcService{api, panicChan}
+func NewGrpcService(api messagegrpc.RoomClient, panicChan chan error, quitChan chan bool) Service {
+	return &grpcService{api, panicChan, quitChan}
 }
 
 func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error {
@@ -35,20 +36,39 @@ func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error 
 
 	rs.panicChan <- nil
 
-	for {
-		newMsg, err := streamClient.Recv()
-		if err == io.EOF {
-			return streamClient.CloseSend()
+	serverMsgChannel := make(chan *message.Message)
+	errorChannel := make(chan error)
+	toChannel := func(streamClient messagegrpc.Room_StreamRoomClient, serverMsgChannel chan *message.Message, errorChannel chan error) {
+		for {
+			newMsg, err := streamClient.Recv()
+			if err != nil {
+				errorChannel <- err
+				return
+			}
+			serverMsgChannel <- newMsg
 		}
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
+	}
 
-		msg <- &domain.Message{
-			UserId: newMsg.UserId,
-			RoomId: newMsg.RoomId,
-			Text:   newMsg.Text,
+	go toChannel(streamClient, serverMsgChannel, errorChannel)
+
+	for {
+		select {
+		case <-rs.quitChan:
+			return nil
+		case err := <-errorChannel:
+			if err == io.EOF {
+				return streamClient.CloseSend()
+			}
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+		case newMsg := <-serverMsgChannel:
+			msg <- &domain.Message{
+				UserId: newMsg.UserId,
+				RoomId: newMsg.RoomId,
+				Text:   newMsg.Text,
+			}
 		}
 	}
 }

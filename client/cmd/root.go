@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/MohammadBnei/go-realtime-chat/client/domain"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,11 +27,11 @@ to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
-		cli(&config{
-			host:     viper.GetString("host"),
-			secure:   viper.GetBool("secure"),
-			username: viper.GetString("username"),
-			room:     viper.GetString("room"),
+		cli(&domain.Config{
+			Host:     viper.GetString("host"),
+			Secure:   viper.GetBool("secure"),
+			Username: viper.GetString("username"),
+			Room:     viper.GetString("room"),
 		})
 	},
 }

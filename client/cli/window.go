@@ -34,7 +34,7 @@ func DrawWindow(chatService service.Service, conf *domain.Config, getStream func
 			conf.Room = form.GetFormItemByLabel("Room Id").(*tview.InputField).GetText()
 			getStream(conf.Room)
 			app.SetFocus(inputField)
-			go chatService.PostMessage(conf.Username, conf.Room, fmt.Sprintf("*%s connected*", conf.Username))
+			go chatService.PostMessage(conf.Username, conf.Room, fmt.Sprintf("*%s connected to %s*", conf.Username, conf.Room))
 		}
 	}
 

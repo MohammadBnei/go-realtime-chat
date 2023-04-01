@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 )
 
 type config struct {
@@ -43,7 +44,9 @@ func cli(conf *config) {
 			Certificates: []tls.Certificate{tlsCert},
 		})
 	}
-	conn, err := grpc.Dial(conf.host, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(conf.host, grpc.WithTransportCredentials(creds), grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time: 30,
+	}))
 	if err != nil {
 		log.Fatalf("did not connect: %s", err)
 	}

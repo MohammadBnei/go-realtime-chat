@@ -1,18 +1,17 @@
-package main
+package cmd
 
 import (
 	"fmt"
 
-	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/html"
-	"github.com/MohammadBnei/realtime-chat/server/config"
-	"github.com/MohammadBnei/realtime-chat/server/service"
+	adapter "github.com/MohammadBnei/go-realtime-chat/server/adapter/html"
+	"github.com/MohammadBnei/go-realtime-chat/server/service"
 
 	"github.com/gin-gonic/gin"
 )
 
 var roomManager service.Manager
 
-func main() {
+func serveHtml(conf *config) {
 	roomManager = service.GetRoomManager()
 	adapter := adapter.NewGinHTMLAdapter(roomManager)
 	router := gin.Default()
@@ -23,5 +22,5 @@ func main() {
 	router.DELETE("/room/:roomid", adapter.DeleteRoom)
 	router.GET("/stream/:roomid", adapter.Stream)
 
-	router.Run(fmt.Sprintf(":%v", config.ParseConfig().Port))
+	router.Run(fmt.Sprintf(":%v", conf.port))
 }

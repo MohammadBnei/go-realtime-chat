@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -7,11 +7,11 @@ import (
 	"os"
 	"os/signal"
 
-	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/grpc"
-	html "github.com/MohammadBnei/realtime-chat/server/adapter/html"
-	rest "github.com/MohammadBnei/realtime-chat/server/adapter/rest"
-	"github.com/MohammadBnei/realtime-chat/server/cmd/rest/docs"
-	"github.com/MohammadBnei/realtime-chat/server/service"
+	adapter "github.com/MohammadBnei/go-realtime-chat/server/adapter/grpc"
+	html "github.com/MohammadBnei/go-realtime-chat/server/adapter/html"
+	rest "github.com/MohammadBnei/go-realtime-chat/server/adapter/rest"
+	"github.com/MohammadBnei/go-realtime-chat/server/docs"
+	"github.com/MohammadBnei/go-realtime-chat/server/service"
 
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"github.com/gin-gonic/gin"
@@ -21,10 +21,10 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func main() {
-	go StartRest("4001")
-	go StartHTML("4000")
-	go StartGrpc("4002")
+func serveAll(conf *config) {
+	go StartRest(fmt.Sprintf("%v", conf.port))
+	go StartHTML(fmt.Sprintf("%v", conf.port+1))
+	go StartGrpc(fmt.Sprintf("%v", conf.port+2))
 
 	// Wait for Control C to exit
 	ch := make(chan os.Signal, 1)

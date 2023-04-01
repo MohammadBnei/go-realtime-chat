@@ -1,12 +1,11 @@
-package main
+package cmd
 
 import (
 	"fmt"
 
-	adapter "github.com/MohammadBnei/realtime-chat/server/adapter/rest"
-	"github.com/MohammadBnei/realtime-chat/server/cmd/rest/docs"
-	"github.com/MohammadBnei/realtime-chat/server/config"
-	"github.com/MohammadBnei/realtime-chat/server/service"
+	adapter "github.com/MohammadBnei/go-realtime-chat/server/adapter/rest"
+	"github.com/MohammadBnei/go-realtime-chat/server/docs"
+	"github.com/MohammadBnei/go-realtime-chat/server/service"
 
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
@@ -26,7 +25,7 @@ import (
 
 // @BasePath  /api
 
-func main() {
+func serveRest(conf *config) {
 	roomManager := service.GetRoomManager()
 	adapter := adapter.NewGinAdapter(roomManager)
 	router := gin.Default()
@@ -39,5 +38,5 @@ func main() {
 
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	router.Run(fmt.Sprintf(":%v", config.ParseConfig().Port))
+	router.Run(fmt.Sprintf(":%v", conf.port))
 }

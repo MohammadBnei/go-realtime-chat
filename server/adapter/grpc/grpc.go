@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/MohammadBnei/realtime-chat/server/service"
+	"github.com/MohammadBnei/go-realtime-chat/server/service"
 
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"buf.build/gen/go/bneiconseil/go-chat/protocolbuffers/go/message"

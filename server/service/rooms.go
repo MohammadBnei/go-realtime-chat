@@ -1,6 +1,6 @@
 package service
 
-import "github.com/MohammadBnei/realtime-chat/server/broadcast"
+import "github.com/MohammadBnei/go-realtime-chat/server/broadcast"
 
 type Manager interface {
 	OpenListener(roomid string) chan interface{}

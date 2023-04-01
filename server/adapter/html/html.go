@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/MohammadBnei/realtime-chat/server/service"
+	"github.com/MohammadBnei/go-realtime-chat/server/service"
 	"github.com/gin-gonic/gin"
 )
 

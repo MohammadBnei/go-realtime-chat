@@ -9,7 +9,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-func DrawWindow(chatService service.Service, conf *domain.Config, getStream func(roomId string), messages chan *domain.Message, quitChan chan bool) {
+func DrawWindow(chatService service.Service, conf *domain.Config, getStream func(username, roomId string), messages chan *domain.Message, quitChan chan bool) {
 	app := tview.NewApplication().EnableMouse(true)
 
 	inputField := tview.NewInputField().
@@ -29,12 +29,10 @@ func DrawWindow(chatService service.Service, conf *domain.Config, getStream func
 
 	changeRoom := func(form *tview.Form) {
 		if newRoomId := form.GetFormItemByLabel("Room Id").(*tview.InputField).GetText(); newRoomId != conf.Room {
-			quitChan <- true
-			go chatService.PostMessage(conf.Username, conf.Room, fmt.Sprintf("%s disconnected", conf.Username))
 			conf.Room = form.GetFormItemByLabel("Room Id").(*tview.InputField).GetText()
-			getStream(conf.Room)
+			quitChan <- true
+			getStream(conf.Username, conf.Room)
 			app.SetFocus(inputField)
-			go chatService.PostMessage(conf.Username, conf.Room, fmt.Sprintf("*%s connected to %s*", conf.Username, conf.Room))
 		}
 	}
 
@@ -84,8 +82,6 @@ func DrawWindow(chatService service.Service, conf *domain.Config, getStream func
 		AddItem(form, 0, 0, 1, 1, 0, 0, false).
 		AddItem(list, 0, 1, 1, 2, 0, 0, false).
 		AddItem(inputField, 1, 0, 1, 3, 0, 0, true)
-
-	go chatService.PostMessage(conf.Username, conf.Room, fmt.Sprintf("*%s connected to %s*", conf.Username, conf.Room))
 
 	if err := app.SetRoot(grid, true).Run(); err != nil {
 		panic(err)

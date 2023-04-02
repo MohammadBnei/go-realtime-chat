@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"time"
 
 	adapter "github.com/MohammadBnei/go-realtime-chat/server/adapter/grpc"
 	"github.com/MohammadBnei/go-realtime-chat/server/service"
@@ -14,6 +15,7 @@ import (
 	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -38,9 +40,15 @@ func serveGrpc(conf *config) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		grpcServer = grpc.NewServer(grpc.Creds(creds))
+		grpcServer = grpc.NewServer(grpc.Creds(creds), grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			PermitWithoutStream: true,
+			MinTime:             30 * time.Second,
+		}))
 	} else {
-		grpcServer = grpc.NewServer()
+		grpcServer = grpc.NewServer(grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			PermitWithoutStream: true,
+			MinTime:             30 * time.Second,
+		}))
 	}
 
 	server := adapter.NewGrpcAdapter(roomManager)

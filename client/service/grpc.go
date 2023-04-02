@@ -12,7 +12,7 @@ import (
 )
 
 type Service interface {
-	GetStream(roomId string, msg chan *domain.Message) error
+	GetStream(username, roomId string, msg chan *domain.Message) error
 	PostMessage(username, roomId, text string)
 }
 
@@ -26,10 +26,13 @@ func NewGrpcService(api messagegrpc.RoomClient, panicChan chan error, quitChan c
 	return &grpcService{api, panicChan, quitChan}
 }
 
-func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error {
-	streamClient, err := rs.api.StreamRoom(context.Background(), &message.RoomRequest{
+func (rs *grpcService) GetStream(username, roomId string, msg chan *domain.Message) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	streamClient, err := rs.api.StreamRoom(ctx, &message.RoomRequest{
 		RoomId: roomId,
+		UserId: username,
 	})
+	defer cancel()
 	if err != nil {
 		rs.panicChan <- err
 		return err
@@ -54,10 +57,11 @@ func (rs *grpcService) GetStream(roomId string, msg chan *domain.Message) error 
 	for {
 		select {
 		case <-rs.quitChan:
+			cancel()
 			return nil
 		case err := <-errorChannel:
 			if err == io.EOF {
-				return streamClient.CloseSend()
+				return err
 			}
 			if err != nil {
 				fmt.Println(err)

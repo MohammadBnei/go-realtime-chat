@@ -37,8 +37,11 @@ func (ga *grpcAdapter) DeleteRoom(ctx context.Context, rq *message.RoomRequest) 
 
 func (ga *grpcAdapter) StreamRoom(rr *message.RoomRequest, srs messagegrpc.Room_StreamRoomServer) error {
 	listener := ga.roomManager.OpenListener(rr.RoomId)
+	defer ga.roomManager.Submit(rr.UserId, rr.RoomId, fmt.Sprintf("*%s disconnected from %s*", rr.UserId, rr.RoomId))
 	defer ga.roomManager.CloseListener(rr.RoomId, listener)
 	logRequest(rr.RoomId, "Stream Room")
+
+	ga.roomManager.Submit(rr.UserId, rr.RoomId, fmt.Sprintf("*%s connected to %s*", rr.UserId, rr.RoomId))
 
 	for {
 		select {

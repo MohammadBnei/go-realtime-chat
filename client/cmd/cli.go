@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"log"
 	"strings"
+	"time"
 
 	window "github.com/MohammadBnei/go-realtime-chat/client/cli"
 	"github.com/MohammadBnei/go-realtime-chat/client/domain"
@@ -21,6 +22,7 @@ func cli(conf *domain.Config) {
 	var conn *grpc.ClientConn
 
 	creds := insecure.NewCredentials()
+	ka := grpc.WithKeepaliveParams(keepalive.ClientParameters{})
 
 	if conf.Secure {
 		tlsCert, _, err := getcert.FromTLSServer(conf.Host, false)
@@ -32,10 +34,11 @@ func cli(conf *domain.Config) {
 			ServerName:   servName,
 			Certificates: []tls.Certificate{tlsCert},
 		})
+		ka = grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time: 45 * time.Second,
+		})
 	}
-	conn, err := grpc.Dial(conf.Host, grpc.WithTransportCredentials(creds), grpc.WithKeepaliveParams(keepalive.ClientParameters{
-		Time: 30,
-	}))
+	conn, err := grpc.Dial(conf.Host, grpc.WithTransportCredentials(creds), ka)
 	if err != nil {
 		log.Fatalf("did not connect: %s", err)
 	}
@@ -48,17 +51,17 @@ func cli(conf *domain.Config) {
 	api := messagegrpc.NewRoomClient(conn)
 	chatService := service.NewGrpcService(api, panicChan, quitChan)
 
-	getStream := func(messages chan *domain.Message) func(roomId string) {
-		return func(roomId string) {
-			go chatService.GetStream(roomId, messages)
+	getStream := func(messages chan *domain.Message, quitChan chan bool) func(username, roomId string) {
+		return func(username, roomId string) {
+			go chatService.GetStream(username, roomId, messages)
 
 			if err := <-panicChan; err != nil {
 				panic(err)
 			}
 		}
-	}(messages)
+	}(messages, quitChan)
 
-	getStream(conf.Room)
+	getStream(conf.Username, conf.Room)
 
 	window.DrawWindow(chatService, conf, getStream, messages, quitChan)
 

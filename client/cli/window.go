@@ -35,11 +35,32 @@ func DrawWindow(chatService service.Service, conf *domain.Config, getStream func
 			app.SetFocus(inputField)
 		}
 	}
+	changeUsername := func(form *tview.Form) {
+		if newUsername := form.GetFormItemByLabel("Username").(*tview.InputField).GetText(); newUsername != conf.Username {
+			conf.Username = form.GetFormItemByLabel("Username").(*tview.InputField).GetText()
+			quitChan <- true
+			getStream(conf.Username, conf.Room)
+			app.SetFocus(inputField)
+		}
+	}
 
 	form := tview.NewForm().
-		AddInputField("Username", conf.Username, 20, nil, func(text string) { conf.Username = text }).
+		AddInputField("Username", conf.Username, 20, nil, nil).
 		AddInputField("Room Id", conf.Room, 30, nil, nil)
 
+	form.GetFormItemByLabel("Username").
+		SetFinishedFunc(func(key tcell.Key) {
+			switch key {
+			case tcell.KeyEscape:
+				form.GetFormItemByLabel("Username").(*tview.InputField).SetText(conf.Username)
+			case tcell.KeyEnter:
+				changeUsername(form)
+			}
+		})
+
+	form.AddButton("Change username", func() {
+		changeUsername(form)
+	})
 	form.GetFormItemByLabel("Room Id").
 		SetFinishedFunc(func(key tcell.Key) {
 			switch key {

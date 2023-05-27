@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package room.v1alpha;
+
+import "room/v1alpha/message.proto";
+
+message ListRoomsRequest {
+  // The parent resource name, for example, "shelves/shelf1"
+  string parent = 1;
+
+  // The maximum number of items to return.
+  int32 page_size = 2;
+
+  // The next_page_token value returned from a previous List request, if any.
+  string page_token = 3;
+}
+
+message ListRoomsResponse {
+  // The field name should match the noun "Room" in the method name.
+  // There will be a maximum number of items returned based on the page_size field in the request.
+  repeated Room rooms = 1;
+
+  // Token to retrieve the next page of results, or empty if there are no more results in the list.
+  string next_page_token = 2;
+}
+
+
+message CreateRoomRequest {
+  // The Room id to use for this Room.
+  string room_id = 1;
+  bool secure = 2;
+  string passphrase = 3;
+}
+
+message CreateRoomResponse {
+  Room room = 1;
+}
+
+message ChangePassphraseRequest {
+  string room_id = 1;
+  string old_passphrase = 2;
+  string new_passphrase = 3;
+}
+
+message ChangePassphraseResponse {}
+
+message UpdateRoomIdRequest {
+  string room_id = 1;
+  string new_room_id = 2;
+}
+
+message UpdateRoomIdResponse {}
+
+message DeleteRoomRequest {
+  string room_id = 1;
+}
+
+message DeleteRoomResponse {}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package message.v1alpha;
+
+message StreamMessagesRequest {
+    string room_id = 1;
+    string message = 2;
+    string passphrase = 3;
+}
+
+message StreamMessagesResponse {
+    string room_id = 1;
+    string message = 2;
+}

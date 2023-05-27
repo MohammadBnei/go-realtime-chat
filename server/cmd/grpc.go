@@ -11,8 +11,8 @@ import (
 
 	adapter "github.com/MohammadBnei/go-realtime-chat/server/adapter/grpc"
 	"github.com/MohammadBnei/go-realtime-chat/server/service"
+	messagev1alpha "github.com/MohammadBnei/go-realtime-chat/server/stubs/message/v1alpha"
 
-	"buf.build/gen/go/bneiconseil/go-chat/grpc/go/message/messagegrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -51,9 +51,10 @@ func serveGrpc(conf *config) {
 		}))
 	}
 
-	server := adapter.NewGrpcAdapter(roomManager)
+	server := adapter.NewMessageAdapter(roomManager)
 
-	messagegrpc.RegisterRoomServer(grpcServer, server)
+	messagev1alpha.RegisterMessageServiceServer(grpcServer, server)
+	// roomgrpc.RegisterRoomServiceServer(grpcServer, server)
 	reflection.Register(grpcServer)
 	go func() {
 		if conf.secure {

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package room.v1alpha;
+
+import "room/v1alpha/request.proto";
+
+service RoomService {
+  rpc ListRooms(ListRoomsRequest) returns (ListRoomsResponse) {}
+  rpc CreateRoom(CreateRoomRequest) returns (CreateRoomResponse) {}
+  rpc ChangePassphrase(ChangePassphraseRequest) returns (ChangePassphraseResponse) {}
+  rpc UpdateRoomId(UpdateRoomIdRequest) returns (UpdateRoomIdResponse) {}
+  rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse) {}
+}

@@ -3,18 +3,14 @@ module github.com/MohammadBnei/go-realtime-chat/server
 go 1.20
 
 require (
-	buf.build/gen/go/bneiconseil/go-chat/grpc/go v1.3.0-20230319184905-b3cf0a723141.1
-	buf.build/gen/go/bneiconseil/go-chat/protocolbuffers/go v1.28.1-20230319184905-b3cf0a723141.4
 	github.com/gin-gonic/gin v1.8.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
 	google.golang.org/grpc v1.53.0
+	google.golang.org/protobuf v1.30.0
 )
 
-require (
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
-)
+require github.com/inconshreveable/mousetrap v1.0.1 // indirect
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -45,8 +41,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
-	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
-	github.com/swaggo/gin-swagger v1.5.3
 	github.com/swaggo/swag v1.8.7
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package message.v1alpha;
+
+import "message/v1alpha/request.proto";
+
+service MessageService {
+  rpc StreamMessages (stream StreamMessagesRequest) returns (stream StreamMessagesResponse);
+}

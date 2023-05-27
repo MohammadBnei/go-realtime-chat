@@ -19,16 +19,7 @@ var serveCmd = &cobra.Command{
 			cert:   viper.GetString("cert"),
 			key:    viper.GetString("key"),
 		}
-		switch cmd.Flag("type").Value.String() {
-		case "grpc":
-			serveGrpc(conf)
-		case "html":
-			serveHtml(conf)
-		case "rest":
-			serveRest(conf)
-		case "all":
-			serveAll(conf)
-		}
+		serveGrpc(conf)
 	},
 }
 
@@ -50,8 +41,6 @@ func init() {
 
 	serveCmd.PersistentFlags().Int16P("port", "p", 4000, "Server port")
 	viper.BindPFlag("port", serveCmd.PersistentFlags().Lookup("port"))
-
-	serveCmd.PersistentFlags().StringP("type", "t", "grpc", "Serve type")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package room.v1alpha;
+
+message Room {
+  string room_id = 1;
+  bool secure = 2;
+  int32 user_count = 3;
+}

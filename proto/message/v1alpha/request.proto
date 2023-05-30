@@ -2,13 +2,19 @@ syntax = "proto3";
 
 package message.v1alpha;
 
+import "message/v1alpha/message.proto";
+
+
 message StreamMessagesRequest {
-    string room_id = 1;
-    string message = 2;
-    string passphrase = 3;
+    Config config = 1;
+    oneof message {
+        TextMessage text = 2;
+    }
 }
 
 message StreamMessagesResponse {
-    string room_id = 1;
-    string message = 2;
+    Config config = 1;
+    oneof message {
+        TextMessage text = 2;
+    }
 }

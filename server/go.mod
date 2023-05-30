@@ -6,6 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
+	github.com/thoas/go-funk v0.9.3
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.30.0
 )

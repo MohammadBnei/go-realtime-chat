@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package message.v1alpha;
+
+message Config {
+  string room_id = 1;
+  string passphrase = 2;
+  string user_id = 3;
+}
+
+message TextMessage {
+  string text = 1;
+}

@@ -6,8 +6,8 @@ which subscribers Register to pick up those messages.
 */
 package broadcast
 
-type broadcaster struct {
-	input chan interface{}
+type broadcaster[T any] struct {
+	input chan T
 	reg   chan chan<- interface{}
 	unreg chan chan<- interface{}
 
@@ -16,7 +16,7 @@ type broadcaster struct {
 
 // The Broadcaster interface describes the main entry points to
 // broadcasters.
-type Broadcaster interface {
+type Broadcaster[T any] interface {
 	// Register a new channel to receive broadcasts
 	Register(chan<- interface{})
 	// Unregister a channel so that it no longer receives broadcasts.
@@ -24,18 +24,16 @@ type Broadcaster interface {
 	// Shut this broadcaster down.
 	Close() error
 	// Submit a new object to all subscribers
-	Submit(interface{})
-	// Try Submit a new object to all subscribers return false if input chan is fill
-	TrySubmit(interface{}) bool
+	Submit(T)
 }
 
-func (b *broadcaster) broadcast(m interface{}) {
+func (b *broadcaster[T]) broadcast(m interface{}) {
 	for ch := range b.outputs {
 		ch <- m
 	}
 }
 
-func (b *broadcaster) run() {
+func (b *broadcaster[T]) run() {
 	for {
 		select {
 		case m := <-b.input:
@@ -54,9 +52,9 @@ func (b *broadcaster) run() {
 
 // NewBroadcaster creates a new broadcaster with the given input
 // channel buffer length.
-func NewBroadcaster(buflen int) Broadcaster {
-	b := &broadcaster{
-		input:   make(chan interface{}, buflen),
+func NewBroadcaster[T any](buflen int) Broadcaster[T] {
+	b := &broadcaster[T]{
+		input:   make(chan T, buflen),
 		reg:     make(chan chan<- interface{}),
 		unreg:   make(chan chan<- interface{}),
 		outputs: make(map[chan<- interface{}]bool),
@@ -67,22 +65,22 @@ func NewBroadcaster(buflen int) Broadcaster {
 	return b
 }
 
-func (b *broadcaster) Register(newch chan<- interface{}) {
+func (b *broadcaster[T]) Register(newch chan<- interface{}) {
 	b.reg <- newch
 }
 
-func (b *broadcaster) Unregister(newch chan<- interface{}) {
+func (b *broadcaster[T]) Unregister(newch chan<- interface{}) {
 	b.unreg <- newch
 }
 
-func (b *broadcaster) Close() error {
+func (b *broadcaster[T]) Close() error {
 	close(b.reg)
 	close(b.unreg)
 	return nil
 }
 
 // Submit an item to be broadcast to all listeners.
-func (b *broadcaster) Submit(m interface{}) {
+func (b *broadcaster[T]) Submit(m T) {
 	if b != nil {
 		b.input <- m
 	}
@@ -90,7 +88,7 @@ func (b *broadcaster) Submit(m interface{}) {
 
 // TrySubmit attempts to submit an item to be broadcast, returning
 // true iff it the item was broadcast, else false.
-func (b *broadcaster) TrySubmit(m interface{}) bool {
+func (b *broadcaster[T]) TrySubmit(m T) bool {
 	if b == nil {
 		return false
 	}

@@ -2,17 +2,17 @@ package service
 
 import "github.com/MohammadBnei/go-realtime-chat/server/broadcast"
 
-type Manager interface {
-	OpenListener(roomid string) chan interface{}
-	CloseListener(roomid string, channel chan interface{})
-	Submit(userid, roomid, text string)
-	DeleteBroadcast(roomid string)
+type Manager[T any] interface {
+	OpenListener(string) chan interface{}
+	CloseListener(string, chan interface{})
+	Submit(string, string, T)
+	DeleteBroadcast(string)
 }
 
-type Message struct {
-	UserId string
-	RoomId string
-	Text   string
+type Message[T any] struct {
+	UserId  string
+	RoomId  string
+	Content T
 }
 
 type Listener struct {
@@ -20,33 +20,29 @@ type Listener struct {
 	Chan   chan interface{}
 }
 
-type manager struct {
-	roomChannels map[string]broadcast.Broadcaster
+type manager[T any] struct {
+	roomChannels map[string]broadcast.Broadcaster[T]
 	open         chan *Listener
 	close        chan *Listener
 	delete       chan string
-	messages     chan *Message
+	messages     chan *Message[T]
 }
 
-var managerSingleton *manager
-
-func GetRoomManager() Manager {
-	if managerSingleton == nil {
-		managerSingleton = &manager{
-			roomChannels: make(map[string]broadcast.Broadcaster),
-			open:         make(chan *Listener, 100),
-			close:        make(chan *Listener, 100),
-			delete:       make(chan string, 100),
-			messages:     make(chan *Message, 100),
-		}
-
-		go managerSingleton.run()
+func NewRoomManager[T any]() Manager[T] {
+	managerSingleton := &manager[T]{
+		roomChannels: make(map[string]broadcast.Broadcaster[T]),
+		open:         make(chan *Listener, 100),
+		close:        make(chan *Listener, 100),
+		delete:       make(chan string, 100),
+		messages:     make(chan *Message[T], 100),
 	}
+
+	go managerSingleton.run()
 
 	return managerSingleton
 }
 
-func (m *manager) run() {
+func (m *manager[T]) run() {
 	for {
 		select {
 		case listener := <-m.open:
@@ -55,22 +51,22 @@ func (m *manager) run() {
 			m.deregister(listener)
 		case roomid := <-m.delete:
 			m.deleteBroadcast(roomid)
-		case message := <-m.messages:
-			m.room(message.RoomId).Submit(*message)
+		case msg := <-m.messages:
+			m.room(msg.RoomId).Submit(msg.Content)
 		}
 	}
 }
 
-func (m *manager) register(listener *Listener) {
+func (m *manager[T]) register(listener *Listener) {
 	m.room(listener.RoomId).Register(listener.Chan)
 }
 
-func (m *manager) deregister(listener *Listener) {
+func (m *manager[T]) deregister(listener *Listener) {
 	m.room(listener.RoomId).Unregister(listener.Chan)
 	close(listener.Chan)
 }
 
-func (m *manager) deleteBroadcast(roomid string) {
+func (m *manager[T]) deleteBroadcast(roomid string) {
 	b, ok := m.roomChannels[roomid]
 	if ok {
 		b.Close()
@@ -81,16 +77,16 @@ func (m *manager) deleteBroadcast(roomid string) {
 /*
 Get the room with the id roomid, or creates and registers it
 */
-func (m *manager) room(roomid string) broadcast.Broadcaster {
+func (m *manager[T]) room(roomid string) broadcast.Broadcaster[T] {
 	b, ok := m.roomChannels[roomid]
 	if !ok {
-		b = broadcast.NewBroadcaster(10)
+		b = broadcast.NewBroadcaster[T](10)
 		m.roomChannels[roomid] = b
 	}
 	return b
 }
 
-func (m *manager) OpenListener(roomid string) chan interface{} {
+func (m *manager[T]) OpenListener(roomid string) chan interface{} {
 	listener := make(chan interface{})
 	m.open <- &Listener{
 		RoomId: roomid,
@@ -99,22 +95,21 @@ func (m *manager) OpenListener(roomid string) chan interface{} {
 	return listener
 }
 
-func (m *manager) CloseListener(roomid string, channel chan interface{}) {
+func (m *manager[T]) CloseListener(roomid string, channel chan interface{}) {
 	m.close <- &Listener{
 		RoomId: roomid,
 		Chan:   channel,
 	}
 }
 
-func (m *manager) DeleteBroadcast(roomid string) {
+func (m *manager[T]) DeleteBroadcast(roomid string) {
 	m.delete <- roomid
 }
 
-func (m *manager) Submit(userid, roomid, text string) {
-	msg := &Message{
-		UserId: userid,
-		RoomId: roomid,
-		Text:   text,
+func (m *manager[T]) Submit(userId, roomId string, msg T) {
+	m.messages <- &Message[T]{
+		UserId:  userId,
+		RoomId:  roomId,
+		Content: msg,
 	}
-	m.messages <- msg
 }

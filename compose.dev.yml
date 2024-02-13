@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  server:
+    image: golang
+    volumes:
+      - ./server:/app
+    environment:
+      - KEY=VALUE
+      - ENV_KEY=${ENV_KEY}
+    ports:
+      - 4001:4001
+      - 4000:4000
+      - 4002:4002
+    working_dir: /app
+    stdin_open: true
+
+
+volumes:
+  postgres_data:

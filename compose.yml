@@ -1,11 +1,20 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  grpc-gen:
-    build: .
-    volumes:
-      - ./message.proto:/gen/proto/message.proto
-      - ./server:/out/go
-      - ./client:/out/go
-    working_dir: /
+  server:
+    build: ./server
+    container_name: dc-realtime-server
+    ports:
+      - 5000:${SERVER_PORT}
 
+  client:
+    build: ./client
+    container_name: dc-realtime-client
+    tty: true
+    environment:
+      - HOST=server:${SERVER_PORT}
+
+networks:
+  default:
+    external: true
+    name: dc-realtime-network

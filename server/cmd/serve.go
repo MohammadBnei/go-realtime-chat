@@ -4,6 +4,8 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -13,6 +15,7 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Run the server",
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Hello Lyon")
 		conf := &config{
 			secure: viper.GetBool("secure"),
 			port:   viper.GetInt32("port"),

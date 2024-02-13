@@ -22,7 +22,9 @@ func cli(conf *domain.Config) {
 	var conn *grpc.ClientConn
 
 	creds := insecure.NewCredentials()
-	ka := grpc.WithKeepaliveParams(keepalive.ClientParameters{})
+	ka := grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time: 45 * time.Second,
+	})
 
 	if conf.Secure {
 		tlsCert, _, err := getcert.FromTLSServer(conf.Host, false)
